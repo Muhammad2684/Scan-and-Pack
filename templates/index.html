@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Scan & Pack</title>
+    
+    <!-- Link to your external stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Inline styles from the base template -->
+    
+</head>
+<body>
+
+    <header class="app-header">
+        <h1 style="text-align: center;">Scan and Pack</h1>
+    </header>
+
+    <main class="app-main">
+        <div class="container" style="display: flex; gap: 40px;">
+
+            <!-- Left Section for Input and Packed List -->
+            <div class="container_left" style="width: 30%; border-right: 1px solid #ccc; padding-right: 20px;">
+                <!-- Main Input Area -->
+                <div style="flex: 1;">
+                    <label for="orderIdInput">Enter Order ID:</label>
+                    <input type="text" id="orderIdInput" placeholder="Scan or type order ID" autofocus>
+                    <button onclick="fetchOrder()">Load Order</button>
+                    <button onclick="clearOrder()">Clear</button>
+                    <div id="statusMessage" class="status-message" style="margin-top: 10px;"></div>
+                </div>
+
+                <!-- Packed Orders List -->
+                <div style="margin-top: 20px;">
+                    <h3>Packed Orders</h3>
+                    <ul id="packedOrdersList" style="list-style-type: none; padding-left: 0;"></ul>
+                    <p><strong>Total Packed:</strong> <span id="packedTotal">0</span></p>
+                    <button onclick="clearPackedOrders()">Clear List</button>
+                </div>
+            </div>
+
+            <!-- Right Section for Order Details -->
+            <div class="container_right" style="flex: 1;">
+                <h2>Order Details</h2>
+                <div id="orderDetails" class="order-details" style="display: none;">
+                    <h3>Order: <span id="orderName"></span> (<span id="shopifyOrderId"></span>)</h3>
+                    <p>Fulfillment Status: <span id="fulfillmentStatus"></span></p>
+                    <h4>Items to Pack:</h4>
+                    <ul id="itemList" class="item-list"></ul>
+                    <button id="markPackedBtn" onclick="markOrderAsPacked()" disabled>Mark Order as Packed in Shopify</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Image Modal (hidden by default) -->
+        <div id="imageModal" class="image-modal">
+            <span class="close">×</span>
+            <img class="modal-content" id="modalImage">
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        {% include 'Navigation.html' %}
+    </footer>
+
+    <!-- Main JavaScript file included once at the end of the body -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>
