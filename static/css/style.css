@@ -99,6 +99,22 @@ input[type="text"]:focus {
     box-shadow: 0 0 0 3px rgba(var(--accent-color), 0.2); /* Soft glow */
 }
 
+input[type="password"] {
+    width: calc(100% - 22px); /* Keep original width logic */
+    padding: 12px; /* Slightly more padding */
+    margin-bottom: 15px; /* More space */
+    border: 1px solid var(--input-border);
+    border-radius: 6px; /* Slightly more rounded */
+    font-size: 1.1em; /* Slightly larger font */
+    background-color: var(--input-bg);
+    color: var(--text-light);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+}
+input[type="password"]:focus {
+    border-color: var(--accent-color); /* Highlight on focus */
+    box-shadow: 0 0 0 3px rgba(var(--accent-color), 0.2); /* Soft glow */
+}
+
 button {
     padding: 12px 25px; /* Larger buttons */
     background-color: var(--button-bg);

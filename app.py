@@ -3,6 +3,7 @@ import requests
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime
 from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 load_dotenv()
 app = Flask(__name__)
@@ -12,10 +13,52 @@ SHOPIFY_STORE_URL = os.getenv('SHOPIFY_STORE_URL')
 SHOPIFY_ACCESS_TOKEN = os.getenv('SHOPIFY_ACCESS_TOKEN')
 SHOPIFY_API_VERSION = os.getenv('SHOPIFY_API_VERSION', "2024-07")
 
+app.secret_key = os.getenv('app.secret_key')
+HARDCODED_USERNAME = os.getenv('HARDCODED_USERNAME')
+HARDCODED_PASSWORD = os.getenv('HARDCODED_PASSWORD')
+
 print(f"DEBUG: Shopify token loaded (last 8 chars): {SHOPIFY_ACCESS_TOKEN[-8:]}")
 
 @app.route('/')
+def home():
+    return render_template('dashboard.html')
+    
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Get form data
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if credentials are correct
+        if username == HARDCODED_USERNAME and password == HARDCODED_PASSWORD:
+            # If correct, "log the user in" by storing their username in the session
+            session['username'] = username
+            flash('You were successfully logged in!', 'success')
+            return redirect(url_for('index'))
+        else:
+            # If incorrect, show an error message
+            flash('Invalid credentials. Please try again.', 'danger')
+            return redirect(url_for('login'))
+
+    # If it's a GET request, just show the login form
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    # Remove the username from the session to "log the user out"
+    session.pop('username', None)
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/scanpack')
 def index():
+
+    if 'username' not in session:
+        # If not, flash a message and redirect to the login page
+        flash('You must be logged in to access the Scanpack app.', 'danger')
+        return redirect(url_for('login'))
+    
     return render_template('index.html')
 
 @app.route('/api/get_order/<order_identifier>', methods=['GET'])
