@@ -1,26 +1,41 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>My Flask App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>My Flask App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-    
-    
-    
-    <!-- Display Flashed Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
+
+{% macro show_flash_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container" style="text-align: center; margin-top: 10px;">
         {% for category, message in messages %}
           <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
-      {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
+      </div>
+
+      <script>
+        setTimeout(() => {
+          document.querySelectorAll('.flash').forEach(el => {
+            el.style.transition = 'opacity 0.5s ease';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500);
+          });
+        }, 3000);
+      </script>
+    {% endif %}
+  {% endwith %}
+{% endmacro %}
+
+<body>
+  <!-- Page Content -->
+  {% block content %}{% endblock %}
 </body>
+
+<!-- Footer -->
 <footer class="app-footer">
-        {% include 'navigation.html' %}
-    </footer>
+  {% include 'navigation.html' %}
+</footer>
 </html>

@@ -1,23 +1,31 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <h2>Login Page</h2>
+<body style="overflow: hidden;"></body>
+
+    <header class="app-header">
+        <h1>Login</h1>
+    </header>
+
+    {{ show_flash_messages() }}
     
-    
-    
-    <form method="post" action="{{ url_for('login') }}">
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <br>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <br>
-        <div>
-            <button type="submit">Login</button>
-        </div>
-    </form>
+   <div style="position: absolute; top: 180px; left: 50%; transform: translateX(-50%);">
+        <form method="post" action="{{ url_for('login') }}">
+            <div class="container">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <br>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <br>
+            <div style="text-align: center;">
+                <button type="submit">Login</button>
+            </div>
+            </div>
+        </form>
+    </div>
 {% endblock %}
