@@ -13,6 +13,7 @@ SHOPIFY_STORE_URL = os.getenv('SHOPIFY_STORE_URL')
 SHOPIFY_ACCESS_TOKEN = os.getenv('SHOPIFY_ACCESS_TOKEN')
 SHOPIFY_API_VERSION = os.getenv('SHOPIFY_API_VERSION', "2024-07")
 
+# Login credentials
 app.secret_key = os.getenv('app.secret_key')
 HARDCODED_USERNAME = os.getenv('HARDCODED_USERNAME')
 HARDCODED_PASSWORD = os.getenv('HARDCODED_PASSWORD')
@@ -167,6 +168,13 @@ def get_order(order_identifier):
             
             final_image_url = image_cache.get(product_id)
 
+            # Extract Customized Name if present
+            customized_name = ""
+            for prop in item.get("properties", []):
+                if prop.get("name") == "Customized Name":
+                    customized_name = prop.get("value")
+                    break
+
             line_items.append({
                 "product_id": product_id,
                 "variant_id": variant_id,
@@ -176,7 +184,8 @@ def get_order(order_identifier):
                 "size": item.get('variant_title'),
                 "product_image": final_image_url,
                 "in_stock": in_stock,
-                "available_quantity": available_quantity
+                "available_quantity": available_quantity,
+                "customized_name": customized_name  # <- NEW
             })
 
         return jsonify({

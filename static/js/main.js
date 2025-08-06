@@ -97,8 +97,10 @@ async function fetchOrder() {
                     ${imageHtml}
                     <div>
                         <span>${item.title} (SKU: ${item.sku || 'N/A'})</span><br>
-                        <span>Size: ${item.size || 'N/A'}</span>
+                        <span>Size: ${item.size || 'N/A'}</span><br>
+                        ${item.customized_name ? `<span>Customized Name: ${item.customized_name}</span><br>` : ''}
                         <div style="display: flex; align-items: center;">
+
                             <span class="item-quantity">Packed: <span id="packed-${item.variant_id}">0</span> / ${qty}</span>
                             <div class="counter-controls">
                                 <button onclick="decrementQuantity('${item.variant_id}')">-</button>
