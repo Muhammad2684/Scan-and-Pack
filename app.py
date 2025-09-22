@@ -2,6 +2,8 @@ import os
 import requests
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
@@ -204,30 +206,42 @@ def get_order(order_identifier):
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 # The tag_order_as_packed function remains the same
+
 @app.route('/api/fulfill_order/<order_id>', methods=['POST'])
 def tag_order_as_packed(order_id):
-    # This function does not need changes
     headers = {
         "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
         "Content-Type": "application/json"
     }
     order_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/orders/{order_id}.json"
+
     try:
+        # Get existing tags
         response = requests.get(order_url, headers=headers, params={"fields": "tags"})
         response.raise_for_status()
         order = response.json().get('order')
         existing_tags = order.get("tags", "")
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        new_tag = f"Packed {timestamp}"
-        updated_tags = f"{existing_tags}, {new_tag}".strip(", ")
+
+        # ✅ Daily tag only (Pakistan timezone)
+        today_tag = datetime.now(ZoneInfo("Asia/Karachi")).strftime("Packed-%Y-%m-%d")
+
+        # Avoid duplicate tags
+        tag_list = [tag.strip() for tag in existing_tags.split(",") if tag.strip()]
+        if today_tag not in tag_list:
+            tag_list.append(today_tag)
+
+        updated_tags = ", ".join(tag_list)
+
+        # Update order with new tags
         update_payload = {"order": {"id": order_id, "tags": updated_tags}}
         update_response = requests.put(order_url, headers=headers, json=update_payload)
         update_response.raise_for_status()
-        return jsonify({"message": "Order tagged successfully", "tag": new_tag})
+
+        return jsonify({"message": "Order tagged successfully", "tag": today_tag})
+
     except requests.exceptions.HTTPError as e:
         return jsonify({"error": "Shopify API error", "details": e.response.text}), e.response.status_code
     except Exception as e:
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-
 if __name__ == '__main__':
     app.run(debug=True)
