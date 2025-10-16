@@ -21,7 +21,7 @@ print(f"DEBUG: Shopify token loaded (last 8 chars): {SHOPIFY_ACCESS_TOKEN[-8:]}"
 
 @app.route('/')
 def home():
-    return render_template('dashboard.html')
+    return render_template('index.html')
 
 @app.route('/scanpack')
 def index():
