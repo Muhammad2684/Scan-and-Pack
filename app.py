@@ -75,6 +75,8 @@ def get_order(order_identifier):
         variant_cache = {}
 
         for item in order.get('line_items', []):
+            if item.get("quantity", 0) <= 0:
+                continue
             product_id = item.get('product_id')
             variant_id = item.get('variant_id')
             inventory_item_id = None
