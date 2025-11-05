@@ -34,11 +34,10 @@ def get_order(order_identifier):
         "Content-Type": "application/json"
     }
 
-    # Detect whether the user scanned an order number or tracking number
     is_tracking_search = not (order_identifier.isdigit() or order_identifier.startswith("#"))
 
     try:
-        # STEP 1: Fetch the order list to resolve ID if needed
+        # STEP 1: Resolve order ID
         shopify_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/orders.json"
         params = {"status": "any"}
 
@@ -57,13 +56,13 @@ def get_order(order_identifier):
                     order = o
                     break
         elif orders:
-            # STEP 2: Pick the latest updated version
+            # Pick the latest updated order (most recent edit)
             order = max(orders, key=lambda o: o.get("updated_at", ""))
 
         if not order:
             return jsonify({"error": "Order not found"}), 404
 
-        # STEP 3: Fetch the *fresh* order JSON directly by ID (no stale data)
+        # STEP 2: Fetch *fresh* order JSON by ID to prevent stale data
         order_id = order["id"]
         order_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/orders/{order_id}.json"
         print(f"[API CALL] Fetching latest order details for ID {order_id}")
@@ -71,24 +70,7 @@ def get_order(order_identifier):
         order_resp.raise_for_status()
         order = order_resp.json().get("order", {})
 
-    try:
-        print(f"[API CALL] Fetching orders with params: {params}")
-        response = requests.get(shopify_url, headers=headers, params=params)
-        response.raise_for_status()
-        orders = response.json().get("orders", [])
-
-        order = None
-        if is_tracking_search:
-            for o in orders:
-                if any(order_identifier == f.get("tracking_number") for f in o.get("fulfillments", [])):
-                    order = o
-                    break
-        elif orders:
-            order = orders[0]
-
-        if not order:
-            return jsonify({"error": "Order not found"}), 404
-
+        # STEP 3: Extract line items
         line_items = []
         image_cache = {}
         variant_cache = {}
@@ -100,49 +82,40 @@ def get_order(order_identifier):
             available_quantity = 0
             in_stock = False
 
+            # Fetch inventory_item_id
             if variant_id:
                 if variant_id in variant_cache:
                     inventory_item_id = variant_cache[variant_id]
                     print(f"[CACHE HIT] Using cached inventory_item_id for variant {variant_id}")
                 else:
-                    print(f"[DEBUG] Fetching variant details for variant_id: {variant_id}...")
                     variant_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/variants/{variant_id}.json"
                     variant_resp = requests.get(variant_url, headers=headers)
-
                     if variant_resp.status_code == 200:
                         variant_data = variant_resp.json().get("variant", {})
                         inventory_item_id = variant_data.get("inventory_item_id")
                         variant_cache[variant_id] = inventory_item_id
-                        print(f"[DEBUG] Found inventory_item_id: {inventory_item_id}")
                     else:
                         print(f"[ERROR] Failed to fetch variant details for {variant_id}. Status: {variant_resp.status_code}")
 
+            # Check inventory level
             if inventory_item_id:
-                print("\n" + "="*50)
-                print(f"[DEBUG] CHECKING INVENTORY FOR: '{item.get('title')}'")
-
                 inventory_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/inventory_levels.json"
                 inv_params = {"inventory_item_ids": [str(inventory_item_id)]}
-                
                 try:
                     inv_resp = requests.get(inventory_url, headers=headers, params=inv_params)
                     inv_resp.raise_for_status()
-
                     levels = inv_resp.json().get("inventory_levels", [])
                     if levels:
                         available_quantity = sum(level.get("available", 0) for level in levels if level.get("available") is not None)
                         in_stock = available_quantity > 0
-                        print(f"[OK] {item.get('title')} | Total Available: {available_quantity}")
                     else:
                         print(f"[NO LEVELS FOUND] {item.get('title')} — API returned an empty list.")
                 except requests.exceptions.HTTPError as e:
-                    print(f"[API ERROR] Inventory check failed. Details: {e.response.text}")
-
-                print("="*50 + "\n")
+                    print(f"[API ERROR] Inventory check failed: {e.response.text}")
             else:
                 print(f"[SKIPPED] Could not find inventory_item_id for variant {variant_id}.")
 
-            # Product image fetch
+            # Product image
             if product_id and product_id not in image_cache:
                 product_url = f"https://{SHOPIFY_STORE_URL}/admin/api/{SHOPIFY_API_VERSION}/products/{product_id}.json?fields=images"
                 prod_resp = requests.get(product_url, headers=headers)
@@ -160,7 +133,7 @@ def get_order(order_identifier):
 
             final_image_url = image_cache.get(product_id)
 
-            # Extract Customized Name if present
+            # Extract Customized Name
             customized_name = ""
             for prop in item.get("properties", []):
                 if prop.get("name") == "Customized Name":
